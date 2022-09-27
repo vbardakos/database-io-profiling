@@ -1,0 +1,34 @@
+version: "3.7"
+networks:
+  requests_network:
+    external: false
+    name: localnet
+services:
+  client:
+    build: .
+    container_name: client
+    volumes:
+      - ./profiling/:/profiling
+    environment:
+      - PG_USERNAME=postgres
+      - PG_PASSWORD=secret
+      - PG_PORT=5432
+      - PG_HOST=postgres
+    deploy:
+      resources:
+        limits:
+          cpus: 1.5
+          memory: 16M
+    networks:
+      - requests_network
+    depends_on:
+      - postgres
+  postgres:
+    image: postgres
+    container_name: postgres
+    networks:
+      - requests_network
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_PASSWORD=secret
