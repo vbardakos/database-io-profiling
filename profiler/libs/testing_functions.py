@@ -1,10 +1,7 @@
 import psycopg
 from multiprocessing import Pool
+from concurrent.futures import ThreadPoolExecutor
 from profiler.libs.profiler.c_profiler import Profiler
-
-
-@Profiler
-def test(*args): return sum(args)
 
 
 @Profiler
@@ -40,7 +37,7 @@ def async_multiprocessing_fetchall(connection: str, stmt: str, iterations: int):
 
 
 @Profiler
-def async_multiprocessing_fetchall_with_async(connection: str, stmt: str, iterations: int):
-    parameters = [('async_fetchall', connection, stmt, 1)] * iterations
-    with Pool() as pool:
-        pool.starmap_async(Profiler.unwrapped, parameters).get()
+def concurrent_fetchall(connection: str, stmt: str, iterations: int):
+    parameters = [(connection, stmt, 1)] * iterations
+    with ThreadPoolExecutor() as executor:
+        executor.map(lambda args: plain_fetchall(*args), parameters)
