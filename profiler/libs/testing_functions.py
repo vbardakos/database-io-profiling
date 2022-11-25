@@ -1,9 +1,13 @@
 import psycopg
 from multiprocessing import Pool
-from profiling.helpers import c_profiling_parser
+from profiler.libs.profiler.c_profiler import Profiler
 
 
-@c_profiling_parser
+@Profiler
+def test(*args): return sum(args)
+
+
+@Profiler
 def plain_fetchall(connection: str, stmt: str, iterations: int):
     for _ in range(iterations):
         with psycopg.connect(conninfo=connection) as conn:
@@ -12,7 +16,7 @@ def plain_fetchall(connection: str, stmt: str, iterations: int):
                 cursor.fetchall()
 
 
-@c_profiling_parser
+@Profiler
 async def async_fetchall(connection: str, stmt: str, iterations: int):
     for _ in range(iterations):
         async with await psycopg.AsyncConnection.connect(connection) as conn:
@@ -21,22 +25,22 @@ async def async_fetchall(connection: str, stmt: str, iterations: int):
                 await cursor.fetchall()
 
 
-@c_profiling_parser
+@Profiler
 def plain_multiprocessing_fetchall(connection: str, stmt: str, iterations: int):
-    parameters = [(connection, stmt, 1)] * iterations
+    parameters = [('plain_fetchall', connection, stmt, 1)] * iterations
     with Pool() as pool:
-        pool.starmap(plain_fetchall.__wrapped__, parameters)
+        pool.starmap(Profiler.unwrapped, parameters)
 
 
-@c_profiling_parser
+@Profiler
 def async_multiprocessing_fetchall(connection: str, stmt: str, iterations: int):
-    parameters = [(connection, stmt, 1)] * iterations
+    parameters = [('plain_fetchall', connection, stmt, 1)] * iterations
     with Pool() as pool:
-        pool.starmap_async(plain_fetchall.__wrapped__, parameters).get()
+        pool.starmap_async(Profiler.unwrapped, parameters).get()
 
 
-@c_profiling_parser
+@Profiler
 def async_multiprocessing_fetchall_with_async(connection: str, stmt: str, iterations: int):
-    parameters = [(connection, stmt, 1)] * iterations
+    parameters = [('async_fetchall', connection, stmt, 1)] * iterations
     with Pool() as pool:
-        pool.starmap_async(async_fetchall.__wrapped__, parameters).get()
+        pool.starmap_async(Profiler.unwrapped, parameters).get()

@@ -6,26 +6,21 @@ networks:
 services:
   client:
     build: .
-    container_name: client
+    container_name: profile_client
     volumes:
-      - ./profiling/:/profiling
+      - ./profiler/:/profiler
     environment:
       - PG_USERNAME=postgres
       - PG_PASSWORD=secret
       - PG_PORT=5432
       - PG_HOST=postgres
-    deploy:
-      resources:
-        limits:
-          cpus: 1.5
-          memory: 16M
     networks:
       - requests_network
     depends_on:
       - postgres
   postgres:
     image: postgres
-    container_name: postgres
+    container_name: profile_postgres
     networks:
       - requests_network
     ports:
